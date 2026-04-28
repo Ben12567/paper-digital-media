@@ -1,0 +1,34 @@
+{
+  "target_products": 10,
+  "seed": 42,
+  "platform": "Instagram-style social feed",
+  "audience_segments": [
+    "students",
+    "young_professionals",
+    "family_users",
+    "price_sensitive_consumers"
+  ],
+  "text_provider": {
+    "kind": "transformers",
+    "model_name_or_path": "C:/Users/Administrator/.cache/huggingface/hub/models--Qwen--Qwen2.5-7B-Instruct/snapshots/a09a35458c702b33eeacc393d103063234e8bc28"
+  },
+  "image_provider": {
+    "enabled": false,
+    "kind": "diffusers",
+    "model_name_or_path": "C:/Users/Administrator/.cache/huggingface/hub/models--stabilityai--stable-diffusion-xl-base-1.0"
+  },
+  "optimization": {
+    "rounds": 2,
+    "candidates_per_round": 2,
+    "elite_count": 1,
+    "reward_weights": {
+      "relevance": 0.20,
+      "clarity": 0.16,
+      "aesthetic": 0.14,
+      "audience_fit": 0.16,
+      "predicted_engagement": 0.16,
+      "diversity": 0.08,
+      "brand_safety": 0.10
+    }
+  }
+}

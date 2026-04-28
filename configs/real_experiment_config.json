@@ -1,0 +1,35 @@
+{
+  "target_products": 100,
+  "seed": 42,
+  "platform": "Instagram-style social feed",
+  "audience_segments": [
+    "students",
+    "young_professionals",
+    "family_users",
+    "price_sensitive_consumers"
+  ],
+  "text_provider": {
+    "kind": "huggingface_inference",
+    "provider": "auto",
+    "model": "Qwen/Qwen2.5-7B-Instruct"
+  },
+  "image_provider": {
+    "enabled": false,
+    "kind": "huggingface_inference",
+    "provider": "auto",
+    "model": "black-forest-labs/FLUX.1-schnell",
+    "model_name_or_path": "black-forest-labs/FLUX.1-schnell"
+  },
+  "optimization": {
+    "rounds": 3,
+    "candidates_per_round": 6,
+    "elite_count": 3,
+    "reward_weights": {
+      "relevance": 0.25,
+      "clarity": 0.20,
+      "aesthetic": 0.20,
+      "predicted_engagement": 0.20,
+      "diversity": 0.15
+    }
+  }
+}

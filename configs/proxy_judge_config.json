@@ -1,0 +1,8 @@
+{
+  "judge_model": {
+    "provider": "auto",
+    "model": "Qwen/Qwen2.5-7B-Instruct",
+    "temperature": 0.0,
+    "max_tokens": 500
+  }
+}

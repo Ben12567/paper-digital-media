@@ -1,0 +1,6 @@
+product_id,product_title,category,selling_points,tone,constraints
+P001,Portable Espresso Maker,Consumer electronics,"compact; rechargeable; travel-friendly; quick extraction",energetic,"avoid health claims"
+P002,Ergonomic Study Lamp,Home office,"eye-care lighting; adjustable arm; low power use; desk-friendly",clear,"avoid medical guarantees"
+P003,Smart Fitness Bottle,Lifestyle,"hydration reminder; temperature display; stainless steel; leak-proof",motivational,"avoid weight-loss claims"
+P004,Noise-Cancelling Earbuds,Audio,"long battery life; active noise cancellation; lightweight; clear calls",premium,"avoid impossible silence claims"
+P005,Family Air Fryer,Kitchen appliance,"large capacity; less oil; easy cleaning; preset menus",warm,"avoid medical nutrition claims"
