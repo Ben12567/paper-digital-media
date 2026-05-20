@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -15,6 +16,17 @@ from diffusers import StableDiffusionPipeline
 from transformers import pipeline
 
 from .core import CampaignBrief, CreativeCandidate, CreativeGenerator
+
+
+def _retry_delay_seconds(attempt: int, response: requests.Response | None = None) -> int:
+    if response is not None:
+        retry_after = response.headers.get("Retry-After")
+        if retry_after:
+            try:
+                return max(1, int(float(retry_after)))
+            except ValueError:
+                pass
+    return min(60, 5 * (2 ** attempt))
 
 
 @dataclass(frozen=True)
@@ -78,44 +90,63 @@ class OpenAITextProvider:
     def _invoke_openai(self, prompt: str) -> str:
         if hasattr(openai, "OpenAI"):
             client = openai.OpenAI(api_key=self.api_key)
-            response = client.responses.create(
-                model=self.model,
-                input=prompt,
-            )
-            return response.output_text
+            for attempt in range(8):
+                try:
+                    response = client.responses.create(
+                        model=self.model,
+                        input=prompt,
+                    )
+                    return response.output_text
+                except Exception as exc:
+                    if attempt == 7:
+                        raise
+                    time.sleep(_retry_delay_seconds(attempt))
 
-        response = requests.post(
-            "https://api.openai.com/v1/responses",
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": self.model,
-                "input": [
-                    {
-                        "role": "system",
-                        "content": "You generate advertising creatives and must return strict JSON only.",
+        last_error: Exception | None = None
+        for attempt in range(8):
+            try:
+                response = requests.post(
+                    "https://api.openai.com/v1/responses",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
                     },
-                    {
-                        "role": "user",
-                        "content": prompt,
+                    json={
+                        "model": self.model,
+                        "input": [
+                            {
+                                "role": "system",
+                                "content": "You generate advertising creatives and must return strict JSON only.",
+                            },
+                            {
+                                "role": "user",
+                                "content": prompt,
+                            },
+                        ],
+                        "max_output_tokens": self.max_tokens,
                     },
-                ],
-                "max_output_tokens": self.max_tokens,
-            },
-            timeout=120,
-        )
-        response.raise_for_status()
-        payload = response.json()
-        output_text = payload.get("output_text")
-        if isinstance(output_text, str) and output_text.strip():
-            return output_text
-        for item in payload.get("output", []):
-            for content in item.get("content", []):
-                if content.get("type") == "output_text" and content.get("text"):
-                    return str(content["text"])
-        raise ValueError("OpenAI response did not contain text output.")
+                    timeout=120,
+                )
+                if response.status_code in {429, 500, 502, 503, 504}:
+                    response.raise_for_status()
+                response.raise_for_status()
+                payload = response.json()
+                output_text = payload.get("output_text")
+                if isinstance(output_text, str) and output_text.strip():
+                    return output_text
+                for item in payload.get("output", []):
+                    for content in item.get("content", []):
+                        if content.get("type") == "output_text" and content.get("text"):
+                            return str(content["text"])
+                raise ValueError("OpenAI response did not contain text output.")
+            except Exception as exc:
+                last_error = exc
+                if attempt == 7:
+                    raise
+                retry_response = response if "response" in locals() and isinstance(response, requests.Response) else None
+                time.sleep(_retry_delay_seconds(attempt, retry_response))
+        assert last_error is not None
+        raise last_error
 
     def _build_prompt(
         self,

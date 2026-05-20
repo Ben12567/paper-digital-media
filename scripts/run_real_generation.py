@@ -64,7 +64,31 @@ def load_csv_rows(path: Path) -> list[dict]:
     if not path.exists():
         return []
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        return list(csv.DictReader(handle))
+        rows = list(csv.DictReader(handle))
+    numeric_int_fields = {"model_calls"}
+    numeric_float_fields = {
+        "latency_ms",
+        "reward",
+        "relevance",
+        "clarity",
+        "aesthetic",
+        "audience_fit",
+        "brand_safety",
+        "factuality_penalty",
+        "diversity",
+        "predicted_engagement",
+    }
+    normalized: list[dict] = []
+    for row in rows:
+        item = dict(row)
+        for key in numeric_int_fields:
+            if key in item and item[key] not in ("", None):
+                item[key] = int(float(item[key]))
+        for key in numeric_float_fields:
+            if key in item and item[key] not in ("", None):
+                item[key] = float(item[key])
+        normalized.append(item)
+    return normalized
 
 
 def candidate_row(candidate, task_id: str) -> dict:
