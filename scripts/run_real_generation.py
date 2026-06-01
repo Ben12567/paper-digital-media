@@ -154,7 +154,10 @@ def build_text_provider(config: dict):
     if kind == "openai":
         return OpenAITextProvider(model=text_cfg["model"])
     if kind == "transformers":
-        return TransformersTextProvider(model_name_or_path=text_cfg["model_name_or_path"])
+        return TransformersTextProvider(
+            model_name_or_path=text_cfg["model_name_or_path"],
+            revision=text_cfg.get("revision"),
+        )
     if kind == "huggingface_inference":
         return HuggingFaceInferenceTextProvider(
             model=text_cfg["model"],
@@ -195,7 +198,7 @@ def build_optimizer(config: dict, generator, *, use_diversity: bool = True, use_
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default=str(ROOT / "configs" / "real_experiment_config.json"))
+    parser.add_argument("--config", default=str(ROOT / "configs" / "local_qwen7b.json"))
     parser.add_argument("--limit-products", type=int, default=None)
     parser.add_argument("--primary-only", action="store_true")
     parser.add_argument("--output-dir", default=str(ROOT / "outputs" / "real_generation"))

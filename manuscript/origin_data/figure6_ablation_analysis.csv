@@ -1,0 +1,6 @@
+mechanism,short_label,composite_reward,reward_drop,rank,interpretation
+Full EAI-CO,EAI-CO,0.8051,0.0000,0,Full model
+Factuality penalty,w/o Fact.,0.8006,-0.0045,4,Governance benefit
+Audience modeling,w/o Audience,0.7833,-0.0218,3,Moderate contribution
+Iterative refinement,w/o Refinement,0.7760,-0.0291,2,Moderate contribution
+Diversity preservation,w/o Diversity,0.7349,-0.0702,1,Largest contribution

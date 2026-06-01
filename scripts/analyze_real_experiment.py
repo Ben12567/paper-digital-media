@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from scipy import stats
 
@@ -29,7 +30,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input", default=str(ROOT / "outputs" / "real_generation" / "real_candidates.csv"))
     parser.add_argument("--output-dir", default=str(ROOT / "outputs" / "real_generation_analysis"))
     parser.add_argument("--model-label", default="local model")
-    parser.add_argument("--protocol-label", default="5 primary methods, 4 ablations, no-human SCI design")
+    parser.add_argument("--protocol-label", default="5 primary methods, 4 ablations, offline automatic-evaluation design")
     return parser.parse_args()
 
 
@@ -71,6 +72,26 @@ def summarize_by_audience(df: pd.DataFrame) -> pd.DataFrame:
     return summary.round(4)
 
 
+def bootstrap_mean_ci(values: pd.Series, seed: int, n_resamples: int = 10000) -> tuple[float, float]:
+    data = values.to_numpy()
+    rng = np.random.default_rng(seed)
+    samples = rng.choice(data, size=(n_resamples, len(data)), replace=True).mean(axis=1)
+    lower, upper = np.quantile(samples, [0.025, 0.975])
+    return float(lower), float(upper)
+
+
+def holm_adjust(pvalues: list[float]) -> list[float]:
+    order = np.argsort(pvalues)
+    adjusted = np.empty(len(pvalues), dtype=float)
+    running_max = 0.0
+    total = len(pvalues)
+    for rank, index in enumerate(order):
+        corrected = min(1.0, (total - rank) * pvalues[index])
+        running_max = max(running_max, corrected)
+        adjusted[index] = running_max
+    return adjusted.tolist()
+
+
 def significance_vs_ours(df: pd.DataFrame) -> pd.DataFrame:
     rows = []
     ours = (
@@ -83,7 +104,7 @@ def significance_vs_ours(df: pd.DataFrame) -> pd.DataFrame:
             }
         )
     )
-    for method in PRIMARY_METHODS:
+    for method_index, method in enumerate(PRIMARY_METHODS):
         if method == "Ours_EAI_CO":
             continue
         baseline = (
@@ -97,23 +118,27 @@ def significance_vs_ours(df: pd.DataFrame) -> pd.DataFrame:
             )
         )
         merged = ours.merge(baseline, on="task_id", how="inner")
-        reward_test = stats.wilcoxon(merged["ours_reward"], merged["baseline_reward"], alternative="greater")
-        engage_test = stats.wilcoxon(
+        reward_diff = merged["ours_reward"] - merged["baseline_reward"]
+        reward_test = stats.ttest_rel(merged["ours_reward"], merged["baseline_reward"])
+        engage_test = stats.ttest_rel(
             merged["ours_predicted_engagement"],
             merged["baseline_predicted_engagement"],
-            alternative="greater",
         )
-        fit_test = stats.wilcoxon(
+        fit_test = stats.ttest_rel(
             merged["ours_audience_fit"],
             merged["baseline_audience_fit"],
-            alternative="greater",
         )
+        ci_lower, ci_upper = bootstrap_mean_ci(reward_diff, seed=42 + method_index)
+        reward_std = reward_diff.std(ddof=1)
         rows.append(
             {
                 "baseline": method,
                 "n_tasks": len(merged),
-                "reward_delta": round((merged["ours_reward"] - merged["baseline_reward"]).mean(), 4),
+                "reward_delta": round(reward_diff.mean(), 4),
+                "reward_ci_lower": round(ci_lower, 4),
+                "reward_ci_upper": round(ci_upper, 4),
                 "reward_pvalue": reward_test.pvalue,
+                "reward_cohens_d": round(reward_diff.mean() / reward_std, 4),
                 "predicted_engagement_delta": round(
                     (merged["ours_predicted_engagement"] - merged["baseline_predicted_engagement"]).mean(), 4
                 ),
@@ -122,7 +147,9 @@ def significance_vs_ours(df: pd.DataFrame) -> pd.DataFrame:
                 "audience_fit_pvalue": fit_test.pvalue,
             }
         )
-    return pd.DataFrame(rows)
+    result = pd.DataFrame(rows)
+    result["reward_adjusted_pvalue"] = holm_adjust(result["reward_pvalue"].tolist())
+    return result
 
 
 def ablation_summary(df: pd.DataFrame) -> pd.DataFrame:
@@ -213,7 +240,10 @@ def write_report(
     )
     for _, row in sig.iterrows():
         text.append(
-            f"- vs `{row['baseline']}`: reward delta `{row['reward_delta']:.4f}` (p={row['reward_pvalue']:.4g}), "
+            f"- vs `{row['baseline']}`: reward delta `{row['reward_delta']:.4f}` "
+            f"(95% CI [{row['reward_ci_lower']:.4f}, {row['reward_ci_upper']:.4f}], "
+            f"p={row['reward_pvalue']:.4g}, adjusted p={row['reward_adjusted_pvalue']:.4g}, "
+            f"Cohen's d={row['reward_cohens_d']:.4f}), "
             f"engagement delta `{row['predicted_engagement_delta']:.4f}` (p={row['predicted_engagement_pvalue']:.4g}), "
             f"audience-fit delta `{row['audience_fit_delta']:.4f}` (p={row['audience_fit_pvalue']:.4g})."
         )

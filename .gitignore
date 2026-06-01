@@ -6,4 +6,10 @@ __pycache__/
 outputs/
 *.tmp
 *.log
+~$$*
 tmp_mdpi_template/
+tmp_compile*/
+manuscript/visio_assets/
+manuscript/figures/*.png
+manuscript/figures/*.svg
+manuscript/figures/*.tiff

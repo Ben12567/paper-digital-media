@@ -283,13 +283,17 @@ class TransformersTextProvider:
     def __init__(
         self,
         model_name_or_path: str,
+        revision: str | None = None,
         max_new_tokens: int = 256,
         temperature: float = 0.2,
     ) -> None:
         self.model_name_or_path = model_name_or_path
+        self.revision = revision
         self.max_new_tokens = max_new_tokens
         self.temperature = temperature
         pipeline_kwargs = {}
+        if revision:
+            pipeline_kwargs["revision"] = revision
         if torch.cuda.is_available():
             pipeline_kwargs["device"] = 0
             pipeline_kwargs["model_kwargs"] = {"dtype": torch.float16}

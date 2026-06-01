@@ -1,0 +1,10 @@
+﻿method,mean_model_calls,mean_latency_ms,median_latency_ms,total_latency_hours
+Ours_without_factual_penalty,8.0,11470.75,11962.5,0.1275
+Ours_EAI_CO,8.0,11114.225,11358.5,0.1235
+Ours_without_diversity,8.0,10796.675,11013.5,0.12
+Ours_without_audience_modeling,8.0,10465.55,10712.5,0.1163
+Ours_without_iterative_loop,4.0,5379.95,5440.0,0.0598
+B1_SingleShot_API,4.0,2780.3,2851.5,0.0309
+B3_PromptEngineered_AI,4.0,2727.475,2810.0,0.0303
+B2_OpenSource_Only,3.0,2707.25,2731.5,0.0301
+B0_Template,0.0,1.0,1.0,0.0

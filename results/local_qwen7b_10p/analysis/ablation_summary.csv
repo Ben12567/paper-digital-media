@@ -1,0 +1,6 @@
+﻿method,n,mean_reward,mean_relevance,mean_clarity,mean_audience_fit,mean_diversity,mean_predicted_engagement,mean_brand_safety,mean_penalty,mean_model_calls,mean_latency_ms,median_latency_ms,reward_gap_vs_ours,audience_fit_gap_vs_ours
+Ours_EAI_CO,40,0.8051,0.9122,0.913,0.4719,0.7693,0.8238,0.9945,0.001,8.0,11114.225,11358.5,0.0,0.0
+Ours_without_factual_penalty,40,0.8006,0.948,0.92,0.4692,0.8196,0.8185,0.813,0.0,8.0,11470.75,11962.5,-0.0045,-0.0027
+Ours_without_audience_modeling,40,0.7833,0.9058,0.92,0.396,0.7396,0.81,1.0,0.0,8.0,10465.55,10712.5,-0.0218,-0.0759
+Ours_without_iterative_loop,40,0.776,0.844,0.9095,0.4421,0.7988,0.7959,0.967,0.006,4.0,5379.95,5440.0,-0.0291,-0.0298
+Ours_without_diversity,40,0.7349,0.883,0.9165,0.4556,0.0,0.8149,0.989,0.001,8.0,10796.675,11013.5,-0.0702,-0.0163
